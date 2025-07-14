@@ -1,0 +1,138 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: 5.51.6
+    helm:
+      values: |
+        global:
+          imageRegistry: ""
+          imagePullSecrets: []
+          storageBackend: postgresql
+
+        server:
+          replicas: 2
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          extraArgs:
+            - --insecure
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+                      hosts:
+            - host: argocd.sre-assessment.local
+              paths:
+                - path: /
+                  pathType: Prefix
+        tls:
+          - secretName: argocd-tls
+            hosts:
+              - argocd.sre-assessment.local
+          service:
+            type: ClusterIP
+            port: 80
+
+        controller:
+          replicas: 2
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+        repoServer:
+          replicas: 2
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+        redis:
+          enabled: true
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+        postgresql:
+          enabled: true
+          postgresql:
+            auth:
+              postgresPassword: "argocd-postgres-password"
+              database: argocd
+            primary:
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              persistence:
+                enabled: true
+                size: 10Gi
+
+        rbac:
+          create: true
+          pspEnabled: false
+
+        configs:
+          secret:
+            argocdServerAdminPassword: "$2a$10$YourHashedPasswordHere"
+          params:
+            server:
+              extraArgs:
+                - --insecure
+                - --rootpath
+                - /argocd
+
+        ha:
+          enabled: true
+
+        metrics:
+          enabled: true
+          service:
+            annotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8080"
+
+        networkPolicy:
+          enabled: true
+          ingress:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      name: ingress-nginx
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true 

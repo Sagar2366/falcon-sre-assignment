@@ -1,0 +1,124 @@
+# ArgoCD Helm Values
+# Production-ready configuration for ArgoCD
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageBackend: postgresql
+
+# ArgoCD Server Configuration
+server:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+        hosts:
+      - host: argocd.sre-assessment.local
+        paths:
+          - path: /
+            pathType: Prefix
+  tls:
+    - secretName: argocd-tls
+      hosts:
+        - argocd.sre-assessment.local
+  service:
+    type: ClusterIP
+    port: 80
+
+# ArgoCD Application Controller
+controller:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# ArgoCD Repo Server
+repoServer:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# ArgoCD Redis
+redis:
+  enabled: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# PostgreSQL Database
+postgresql:
+  enabled: true
+  postgresql:
+    auth:
+      postgresPassword: "argocd-postgres-password"
+      database: argocd
+    primary:
+      resources:
+        limits:
+          cpu: 500m
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 512Mi
+      persistence:
+        enabled: true
+        size: 10Gi
+
+# RBAC Configuration
+rbac:
+  create: true
+  pspEnabled: false
+
+# Security Configuration
+configs:
+  secret:
+    argocdServerAdminPassword: "$2a$10$YourHashedPasswordHere"
+  params:
+    server:
+      extraArgs:
+        - --insecure
+        - --rootpath
+        - /argocd
+
+# High Availability
+ha:
+  enabled: true
+
+# Metrics
+metrics:
+  enabled: true
+  service:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx 
