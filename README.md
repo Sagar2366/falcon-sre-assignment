@@ -8,14 +8,15 @@ This project demonstrates a comprehensive Site Reliability Engineering (SRE) imp
 
 ### Infrastructure (Terraform)
 - AWS VPC with public/private subnets
-- EKS cluster with auto-scaling
+- EKS cluster with auto-scaling, Karpenter, KRO, and EKS auto mode
 - Lambda function for cost reporting
 - CloudWatch monitoring and alerting
 - IAM roles with least privilege
 - Security groups and network policies
+- Terraform state management with S3 and DynamoDB
 
 ### Application (Kubernetes)
-- ArgoCD GitOps deployment
+- ArgoCD GitOps deployment (multi-cluster, multi-app)
 - Helm charts for application packaging
 - Multi-environment setup (dev/staging/production)
 - Prometheus/Grafana monitoring stack
@@ -48,7 +49,7 @@ sudo apt install -y awscli kubectl helm terraform docker.io
 ### 1. Clone and Setup
 ```bash
 git clone <your-repo-url>
-cd crowdstrike-falcon-sre
+cd falcon-sre-assignment
 
 # Create Lambda package
 ./scripts/create-lambda-package.sh
@@ -94,32 +95,102 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 nano terraform/terraform.tfvars
 ```
 
-## Architecture Overview
+## Architecture Diagram
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Development   │    │     Staging     │    │   Production    │
-│   Environment   │    │   Environment   │    │   Environment   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │    ArgoCD       │
-                    │   GitOps CD     │
-                    └─────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   EKS Cluster   │
-                    │   (Multi-AZ)    │
-                    └─────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   AWS Lambda    │    │   Application   │    │   Monitoring    │
-│  Cost Reporter  │    │   (Container)   │    │   & Alerting    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart TD
+  subgraph Dev["Dev Cluster (EKS)"]
+    DevEKS(EKS Cluster)
+    DevKarpenter(Karpenter)
+    DevKRO(KRO)
+    DevArgoCD(ArgoCD)
+    DevApp(Apps via Helm)
+    DevProm(Prometheus)
+    DevGrafana(Grafana)
+    DevAlert(Alertmanager)
+    DevIngress(Ingress NGINX)
+    DevEKS --> DevKarpenter
+    DevEKS --> DevKRO
+    DevEKS --> DevArgoCD
+    DevArgoCD --> DevApp
+    DevEKS --> DevProm
+    DevEKS --> DevGrafana
+    DevEKS --> DevAlert
+    DevEKS --> DevIngress
+  end
+
+  subgraph Staging["Staging Cluster (EKS)"]
+    StgEKS(EKS Cluster)
+    StgKarpenter(Karpenter)
+    StgKRO(KRO)
+    StgArgoCD(ArgoCD)
+    StgApp(Apps via Helm)
+    StgProm(Prometheus)
+    StgGrafana(Grafana)
+    StgAlert(Alertmanager)
+    StgIngress(Ingress NGINX)
+    StgEKS --> StgKarpenter
+    StgEKS --> StgKRO
+    StgEKS --> StgArgoCD
+    StgArgoCD --> StgApp
+    StgEKS --> StgProm
+    StgEKS --> StgGrafana
+    StgEKS --> StgAlert
+    StgEKS --> StgIngress
+  end
+
+  subgraph Prod["Production Cluster (EKS)"]
+    PrdEKS(EKS Cluster)
+    PrdKarpenter(Karpenter)
+    PrdKRO(KRO)
+    PrdArgoCD(ArgoCD)
+    PrdApp(Apps via Helm)
+    PrdProm(Prometheus)
+    PrdGrafana(Grafana)
+    PrdAlert(Alertmanager)
+    PrdIngress(Ingress NGINX)
+    PrdEKS --> PrdKarpenter
+    PrdEKS --> PrdKRO
+    PrdEKS --> PrdArgoCD
+    PrdArgoCD --> PrdApp
+    PrdEKS --> PrdProm
+    PrdEKS --> PrdGrafana
+    PrdEKS --> PrdAlert
+    PrdEKS --> PrdIngress
+  end
+
+  subgraph CI["CI/CD & Infra"]
+    GitHub(GitHub Actions)
+    Terraform(Terraform)
+    S3State(S3 State Backend)
+    DynamoDB(DynamoDB Lock)
+    ECR(ECR Registry)
+    GitHub -->|CI/CD| DevArgoCD
+    GitHub -->|CI/CD| StgArgoCD
+    GitHub -->|CI/CD| PrdArgoCD
+    GitHub -->|Build/Push| ECR
+    Terraform -->|State| S3State
+    Terraform -->|Lock| DynamoDB
+    GitHub --> Terraform
+  end
+
+  subgraph AWS["AWS Shared Services"]
+    Lambda(Lambda Cost Reporter)
+    SES(SES Email)
+    SNS(SNS Alerts)
+    CloudWatch(CloudWatch)
+    S3(S3 Buckets)
+    Lambda --> SES
+    Lambda --> CloudWatch
+    Lambda --> SNS
+    Lambda --> S3
+    PrdEKS --> CloudWatch
+    StgEKS --> CloudWatch
+    DevEKS --> CloudWatch
+  end
+
+  classDef eks fill:#e3f2fd,stroke:#1976d2,stroke-width:2px;
+  class DevEKS,StgEKS,PrdEKS eks;
 ```
 
 ## Monitoring & Observability
@@ -144,6 +215,7 @@ nano terraform/terraform.tfvars
 - **Auto-scaling**: Based on demand
 - **Cost Reporting**: Daily Lambda reports
 - **Reserved Instances**: For predictable workloads
+- **Karpenter & KRO**: Automated cost optimization
 
 ## Documentation
 
