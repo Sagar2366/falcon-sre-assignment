@@ -1,3 +1,4 @@
+# IMPORTANT: Regularly update provider versions and Terraform version for security and compatibility.
 terraform {
   required_version = ">= 1.5"
   

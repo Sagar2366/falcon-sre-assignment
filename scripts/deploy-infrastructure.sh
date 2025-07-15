@@ -116,6 +116,7 @@ plan_terraform() {
     terraform plan -out=tfplan
     
     print_success "Terraform plan created"
+    echo -e "${YELLOW}[REVIEW]${NC} Please review the Terraform plan output above for any unexpected changes before proceeding."
 }
 
 # Apply Terraform changes

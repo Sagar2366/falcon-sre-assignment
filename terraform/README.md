@@ -138,6 +138,14 @@ kubectl exec -n vault vault-0 -- vault login -method=kubernetes role=my-app
 vault kv put secret/my-app/database password=mysecret
 ```
 
+## Secrets Management Best Practices
+
+- **Never hardcode secrets** (API keys, passwords, tokens) in .tf, .sh, or .yaml files.
+- Use **Vault** or AWS Secrets Manager for managing sensitive data.
+- Use environment variables or CI/CD secrets for passing sensitive values.
+- Rotate secrets regularly and audit access.
+- Reference secrets in Terraform using data sources or external providers.
+
 ## Security
 
 - **Private EKS Endpoint** - No public access to cluster API

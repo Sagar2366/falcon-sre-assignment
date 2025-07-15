@@ -43,13 +43,27 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     
+    - name: Terraform Plan (Review Only)
+      run: |
+        cd terraform
+        terraform init -backend=false
+        terraform plan
+
+    - name: Helm Chart Dry Run
+      run: |
+        helm template sre-app kubernetes/helm-charts/app | kubectl apply --dry-run=client -f -
+
     - name: Run security scans
       run: |
         # Trivy vulnerability scan
         trivy image ${{ steps.build-image.outputs.image }}
+        # If critical vulns found, block deploy (uncomment to enforce)
+        # trivy image --exit-code 1 --severity CRITICAL ${{ steps.build-image.outputs.image }}
         
         # Docker Scout
         docker scout cves ${{ steps.build-image.outputs.image }}
+        # If critical vulns found, block deploy (uncomment to enforce)
+        # docker scout cves --exit-code 1 --only-severity critical ${{ steps.build-image.outputs.image }}
     
     - name: Test application
       run: |
