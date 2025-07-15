@@ -1,0 +1,49 @@
+name: Helm Chart E2E on kind
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  kind-helm-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install kind
+        uses: helm/kind-action@v1.8.0
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Add metrics-server repo and build dependencies
+        run: |
+          helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+          helm repo update
+          cd simple-sre-demo/helm-chart
+          helm dependency build
+
+      - name: Deploy Helm chart to kind
+        run: |
+          cd simple-sre-demo/helm-chart
+          helm install demo-app . || helm upgrade demo-app . --install
+
+      - name: Wait for pods to be ready
+        run: |
+          kubectl get pods -A
+          kubectl wait --for=condition=Ready pod -l app=demo-app --timeout=120s
+
+      - name: Show HPA and metrics-server status
+        run: |
+          kubectl get hpa
+          kubectl get pods -A 

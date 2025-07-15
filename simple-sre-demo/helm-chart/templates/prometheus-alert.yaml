@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-app-alerts
+  labels:
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: demo-app.rules
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{job="demo-app",status=~"5.."}[5m]))
+              /
+            sum(rate(http_requests_total{job="demo-app"}[5m]))
+            > 0.01
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High 5xx error rate on demo-app (>1% for 5m)"
+            description: "More than 1% of requests to demo-app returned 5xx in the last 5 minutes." 

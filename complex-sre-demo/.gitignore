@@ -1,0 +1,145 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
+.terraformrc
+terraform.rc
+
+# Secrets and Credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+*.secret
+*.credential
+
+# AWS
+.aws/
+aws-credentials
+aws-config
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+.kube/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# SonarQube
+.sonar/
+sonar-project.properties
+
+# Security scan results
+*.sarif
+scan-results/
+security-reports/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Certificate files
+*.pem
+*.crt
+*.key
+*.csr
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# GPG keys
+*.gpg
+*.asc
+
+# Vault
+.vault-token
+vault-token
+
+# Local development
+local/
+dev/
+test-data/ 

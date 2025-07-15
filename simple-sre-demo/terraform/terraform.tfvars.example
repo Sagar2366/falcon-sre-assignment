@@ -1,0 +1,4 @@
+lambda_zip_path = "./lambda_package.zip"
+ses_sender      = "admin@company.com"
+ses_recipient   = "admin@company.com"
+aws_region      = "us-east-1" 

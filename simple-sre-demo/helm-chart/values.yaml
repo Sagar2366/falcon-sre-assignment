@@ -1,0 +1,10 @@
+replicaCount: 1
+image:
+  repository: nginx
+  tag: alpine
+service:
+  type: ClusterIP
+  port: 80 
+metrics-server:
+  args:
+    - --kubelet-insecure-tls
